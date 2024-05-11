@@ -3,307 +3,309 @@
 BEGIN;
 
 
-CREATE TABLE IF NOT EXISTS public."RideLog"
+CREATE TABLE IF NOT EXISTS public.bus
 (
-    "Id" integer NOT NULL,
-    "RideId" integer NOT NULL,
-    "PassengersNumber" integer,
-    "Accident" text,
-    PRIMARY KEY ("Id")
+    id serial NOT NULL,
+    bus_type_id integer,
+    next_car_reviev date,
+    actual_event_log_id integer,
+    CONSTRAINT "Bus_pkey" PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS public."Ride"
-(
-    "Id" integer NOT NULL,
-    "BusId" integer NOT NULL,
-    "DriverId" integer NOT NULL,
-    "TrackId" integer NOT NULL,
-    "Date" date NOT NULL,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."Ride"
-    IS 'jeden przejazd w konkretnym czasie, z konkretnym kierowca';
-
-CREATE TABLE IF NOT EXISTS public."Driver"
-(
-    "Id" integer NOT NULL,
-    "Name" text NOT NULL,
-    "Lastname" text NOT NULL,
-    "License" text,
-    "Selary" money,
-    "HolidaysDays" integer,
-    PRIMARY KEY ("Id")
-);
-
-CREATE TABLE IF NOT EXISTS public."DriverUnavailability"
-(
-    "DriverId" integer NOT NULL,
-    "StartDate" date NOT NULL,
-    "EndDate" date NOT NULL,
-    "Reason" text,
-    PRIMARY KEY ("DriverId")
-);
-
-CREATE TABLE IF NOT EXISTS public."Track"
-(
-    "Id" integer NOT NULL,
-    "LineId" integer NOT NULL,
-    "StartTime" time without time zone NOT NULL,
-    "BusTypeId" integer NOT NULL,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."Track"
-    IS 'Kurs - definiuje czas odjazdu, jaka linia oraz typ busa potrzebny';
-
-CREATE TABLE IF NOT EXISTS public."Line"
-(
-    "Id" integer NOT NULL,
-    "LineName" text NOT NULL,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."Line"
-    IS 'linia ';
-
-CREATE TABLE IF NOT EXISTS public."Route"
-(
-    "Id" integer NOT NULL,
-    "LineId" integer NOT NULL,
-    "BusStopId" integer NOT NULL,
-    "Order" integer NOT NULL,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."Route"
-    IS 'przystanki po kolei';
-
-CREATE TABLE IF NOT EXISTS public."BusStop"
-(
-    "Id" integer NOT NULL,
-    "Latitude" double precision NOT NULL,
-    "Longitude" double precision NOT NULL,
-    "Name" text NOT NULL,
-    "Adress" text NOT NULL,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."BusStop"
-    IS 'przystanek';
-
-CREATE TABLE IF NOT EXISTS public."Trackroute"
-(
-    "Id" integer NOT NULL,
-    "TrackId" integer NOT NULL,
-    "RouteId" integer NOT NULL,
-    "Time" time without time zone NOT NULL,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."Trackroute"
-    IS 'planowany czas przyjazdu na przystanek';
-
-CREATE TABLE IF NOT EXISTS public."RealTimeTrackroute"
-(
-    "RideId" integer NOT NULL,
-    "TrackRouteId" integer NOT NULL,
-    "realTime" time without time zone NOT NULL
-);
-
-COMMENT ON TABLE public."RealTimeTrackroute"
-    IS 'realny czas dojazdu na przystanek pojazdu';
-
-CREATE TABLE IF NOT EXISTS public."BusType"
-(
-    "Id" integer NOT NULL,
-    "Description" text NOT NULL,
-    "Shortcut" text NOT NULL,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."BusType"
-    IS 'rodzaj busa';
-
-CREATE TABLE IF NOT EXISTS public."Bus"
-(
-    "Id" integer NOT NULL,
-    "Capacity" integer,
-    "BusTypeId" integer,
-    "NextCarReviev" date,
-    "ActualEventLogId" integer,
-    PRIMARY KEY ("Id")
-);
-
-COMMENT ON TABLE public."Bus"
+COMMENT ON TABLE public.bus
     IS 'pojazd mechaniczny';
 
-CREATE TABLE IF NOT EXISTS public."Refueling"
+CREATE TABLE IF NOT EXISTS public.bus_stop
 (
-    "BusId" integer NOT NULL,
-    "Quantity" double precision NOT NULL,
-    "Date" date NOT NULL
+    id serial NOT NULL,
+    latitude double precision,
+    longitude double precision,
+    name text COLLATE pg_catalog."default" NOT NULL,
+    adress text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT bus_stop_pkey PRIMARY KEY (id)
 );
 
-COMMENT ON TABLE public."Refueling"
-    IS 'tankowanie';
+COMMENT ON TABLE public.bus_stop
+    IS 'przystanek';
 
-CREATE TABLE IF NOT EXISTS public."EventLog"
+CREATE TABLE IF NOT EXISTS public.bus_type
 (
-    "Id" integer NOT NULL,
-    "BusId" integer NOT NULL,
-    "EventId" integer,
-    status text,
-    "StartDate" date NOT NULL,
-    "EndDate" date,
-    PRIMARY KEY ("Id")
+    id serial NOT NULL,
+    description text COLLATE pg_catalog."default" NOT NULL,
+    shortcut text COLLATE pg_catalog."default" NOT NULL,
+	capacity integer,
+    CONSTRAINT bus_type_pkey PRIMARY KEY (id)
 );
 
-COMMENT ON TABLE public."EventLog"
-    IS 'tablica przechowuja wszystkie aktualne oraz przeszle zdarzenia, awarie itd';
+COMMENT ON TABLE public.bus_type
+    IS 'rodzaj busa';
 
-CREATE TABLE IF NOT EXISTS public."Event"
+CREATE TABLE IF NOT EXISTS public.driver
 (
-    "Id" integer NOT NULL,
-    "Name" text NOT NULL,
-    "Description" text,
-    PRIMARY KEY ("Id")
+    id serial NOT NULL,
+    name text COLLATE pg_catalog."default" NOT NULL,
+    lastname text COLLATE pg_catalog."default" NOT NULL,
+    license text COLLATE pg_catalog."default",
+    selary money DEFAULT 4000,
+    holidays_days integer DEFAULT 30,
+    CONSTRAINT driver_pkey PRIMARY KEY (id)
 );
 
-COMMENT ON TABLE public."Event"
+CREATE TABLE IF NOT EXISTS public.driver_unavailability
+(
+    driver_id integer NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL,
+    reason text COLLATE pg_catalog."default",
+    CONSTRAINT "DriverUnavailability_pkey" PRIMARY KEY (driver_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.event
+(
+    id serial NOT NULL,
+    name text COLLATE pg_catalog."default" NOT NULL,
+    description text COLLATE pg_catalog."default",
+    CONSTRAINT event_pkey PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE public.event
     IS 'zbior mozliwych zdarzen';
 
-ALTER TABLE IF EXISTS public."RideLog"
-    ADD FOREIGN KEY ("RideId")
-    REFERENCES public."Ride" ("Id") MATCH SIMPLE
+CREATE TABLE IF NOT EXISTS public.event_log
+(
+    id serial NOT NULL,
+    bus_id integer NOT NULL,
+    event_id integer,
+    status text COLLATE pg_catalog."default",
+    start_date date NOT NULL,
+    end_date date,
+    CONSTRAINT "EventLog_pkey" PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE public.event_log
+    IS 'tablica przechowuja wszystkie aktualne oraz przeszle zdarzenia, awarie itd';
+
+CREATE TABLE IF NOT EXISTS public.line
+(
+    id serial NOT NULL,
+    line_name text COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT line_pkey PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE public.line
+    IS 'linia ';
+
+CREATE TABLE IF NOT EXISTS public.real_time_trackroute
+(
+    ride_id integer NOT NULL,
+    track_route_id integer NOT NULL,
+    real_time time without time zone NOT NULL
+);
+
+COMMENT ON TABLE public.real_time_trackroute
+    IS 'realny czas dojazdu na przystanek pojazdu';
+
+CREATE TABLE IF NOT EXISTS public.refueling
+(
+    bus_id integer NOT NULL,
+    quantity double precision NOT NULL,
+    date date NOT NULL
+);
+
+COMMENT ON TABLE public.refueling
+    IS 'tankowanie';
+
+CREATE TABLE IF NOT EXISTS public.ride
+(
+    id serial NOT NULL,
+    bus_id integer NOT NULL,
+    driver_d integer NOT NULL,
+    track_id integer NOT NULL,
+    date date NOT NULL,
+    CONSTRAINT "Ride_pkey" PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE public.ride
+    IS 'jeden przejazd w konkretnym czasie, z konkretnym kierowca';
+
+CREATE TABLE IF NOT EXISTS public.ride_log
+(
+    id integer NOT NULL,
+    ride_id integer NOT NULL,
+    passengers_number integer,
+    accident text COLLATE pg_catalog."default",
+    CONSTRAINT "RideLog_pkey" PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.route
+(
+    id serial NOT NULL,
+    line_id integer NOT NULL,
+    bus_stop_id integer NOT NULL,
+    "order" integer NOT NULL,
+    CONSTRAINT "Route_pkey" PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE public.route
+    IS 'przystanki po kolei';
+
+CREATE TABLE IF NOT EXISTS public.track
+(
+    id serial NOT NULL,
+    line_id integer NOT NULL,
+    start_time time without time zone NOT NULL,
+    bus_type_id integer NOT NULL,
+    CONSTRAINT "Track_pkey" PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE public.track
+    IS 'Kurs - definiuje czas odjazdu, jaka linia oraz typ busa potrzebny';
+
+CREATE TABLE IF NOT EXISTS public.trackroute
+(
+    id serial NOT NULL,
+    track_id integer NOT NULL,
+    route_d integer NOT NULL,
+    "time" time without time zone NOT NULL,
+    CONSTRAINT "Trackroute_pkey" PRIMARY KEY (id)
+);
+
+COMMENT ON TABLE public.trackroute
+    IS 'planowany czas przyjazdu na przystanek';
+
+ALTER TABLE IF EXISTS public.bus
+    ADD CONSTRAINT "Bus_BusTypeId_fkey" FOREIGN KEY (bus_type_id)
+    REFERENCES public.bus_type (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Ride"
-    ADD FOREIGN KEY ("DriverId")
-    REFERENCES public."Driver" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.driver_unavailability
+    ADD CONSTRAINT "DriverUnavailability_DriverId_fkey" FOREIGN KEY (driver_id)
+    REFERENCES public.driver (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+CREATE INDEX IF NOT EXISTS "DriverUnavailability_pkey"
+    ON public.driver_unavailability(driver_id);
+
+
+ALTER TABLE IF EXISTS public.event_log
+    ADD CONSTRAINT "EventLog_BusId_fkey" FOREIGN KEY (bus_id)
+    REFERENCES public.bus (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Ride"
-    ADD FOREIGN KEY ("BusId")
-    REFERENCES public."Bus" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.event_log
+    ADD CONSTRAINT "EventLog_EventId_fkey" FOREIGN KEY (event_id)
+    REFERENCES public.event (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Ride"
-    ADD FOREIGN KEY ("TrackId")
-    REFERENCES public."Track" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.real_time_trackroute
+    ADD CONSTRAINT "RealTimeTrackroute_RideId_fkey" FOREIGN KEY (ride_id)
+    REFERENCES public.ride (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."DriverUnavailability"
-    ADD FOREIGN KEY ("DriverId")
-    REFERENCES public."Driver" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.real_time_trackroute
+    ADD CONSTRAINT "RealTimeTrackroute_TrackRouteId_fkey" FOREIGN KEY (track_route_id)
+    REFERENCES public.trackroute (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Track"
-    ADD FOREIGN KEY ("BusTypeId")
-    REFERENCES public."BusType" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.refueling
+    ADD CONSTRAINT "Refueling_BusId_fkey" FOREIGN KEY (bus_id)
+    REFERENCES public.bus (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Track"
-    ADD FOREIGN KEY ("LineId")
-    REFERENCES public."Line" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.ride
+    ADD CONSTRAINT "Ride_BusId_fkey" FOREIGN KEY (bus_id)
+    REFERENCES public.bus (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Route"
-    ADD FOREIGN KEY ("LineId")
-    REFERENCES public."Line" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.ride
+    ADD CONSTRAINT "Ride_DriverId_fkey" FOREIGN KEY (driver_d)
+    REFERENCES public.driver (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Route"
-    ADD FOREIGN KEY ("BusStopId")
-    REFERENCES public."BusStop" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.ride
+    ADD CONSTRAINT "Ride_TrackId_fkey" FOREIGN KEY (track_id)
+    REFERENCES public.track (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Trackroute"
-    ADD FOREIGN KEY ("TrackId")
-    REFERENCES public."Track" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.ride_log
+    ADD CONSTRAINT "RideLog_RideId_fkey" FOREIGN KEY (ride_id)
+    REFERENCES public.ride (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Trackroute"
-    ADD FOREIGN KEY ("RouteId")
-    REFERENCES public."Route" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.route
+    ADD CONSTRAINT "Route_BusStopId_fkey" FOREIGN KEY (bus_stop_id)
+    REFERENCES public.bus_stop (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."RealTimeTrackroute"
-    ADD FOREIGN KEY ("RideId")
-    REFERENCES public."Ride" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.route
+    ADD CONSTRAINT "Route_LineId_fkey" FOREIGN KEY (line_id)
+    REFERENCES public.line (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."RealTimeTrackroute"
-    ADD FOREIGN KEY ("TrackRouteId")
-    REFERENCES public."Trackroute" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.track
+    ADD CONSTRAINT "Track_BusTypeId_fkey" FOREIGN KEY (bus_type_id)
+    REFERENCES public.bus_type (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Bus"
-    ADD FOREIGN KEY ("BusTypeId")
-    REFERENCES public."BusType" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.track
+    ADD CONSTRAINT "Track_LineId_fkey" FOREIGN KEY (line_id)
+    REFERENCES public.line (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."Refueling"
-    ADD FOREIGN KEY ("BusId")
-    REFERENCES public."Bus" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.trackroute
+    ADD CONSTRAINT "Trackroute_RouteId_fkey" FOREIGN KEY (route_d)
+    REFERENCES public.route (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS public."EventLog"
-    ADD FOREIGN KEY ("EventId")
-    REFERENCES public."Event" ("Id") MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public."EventLog"
-    ADD FOREIGN KEY ("BusId")
-    REFERENCES public."Bus" ("Id") MATCH SIMPLE
+ALTER TABLE IF EXISTS public.trackroute
+    ADD CONSTRAINT "Trackroute_TrackId_fkey" FOREIGN KEY (track_id)
+    REFERENCES public.track (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
