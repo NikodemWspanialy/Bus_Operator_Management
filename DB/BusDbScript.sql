@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS public.trackroute
 (
     id serial NOT NULL,
     track_id integer NOT NULL,
-    route_d integer NOT NULL,
+    route_id integer NOT NULL,
     "time" time without time zone NOT NULL,
     CONSTRAINT "Trackroute_pkey" PRIMARY KEY (id)
 );
@@ -176,16 +176,16 @@ COMMENT ON TABLE public.trackroute
 ALTER TABLE IF EXISTS public.bus
     ADD CONSTRAINT "Bus_BusTypeId_fkey" FOREIGN KEY (bus_type_id)
     REFERENCES public.bus_type (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.driver_unavailability
     ADD CONSTRAINT "DriverUnavailability_DriverId_fkey" FOREIGN KEY (driver_id)
     REFERENCES public.driver (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 CREATE INDEX IF NOT EXISTS "DriverUnavailability_pkey"
     ON public.driver_unavailability(driver_id);
@@ -194,120 +194,120 @@ CREATE INDEX IF NOT EXISTS "DriverUnavailability_pkey"
 ALTER TABLE IF EXISTS public.event_log
     ADD CONSTRAINT "EventLog_BusId_fkey" FOREIGN KEY (bus_id)
     REFERENCES public.bus (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.event_log
     ADD CONSTRAINT "EventLog_EventId_fkey" FOREIGN KEY (event_id)
     REFERENCES public.event (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.real_time_trackroute
     ADD CONSTRAINT "RealTimeTrackroute_RideId_fkey" FOREIGN KEY (ride_id)
     REFERENCES public.ride (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.real_time_trackroute
     ADD CONSTRAINT "RealTimeTrackroute_TrackRouteId_fkey" FOREIGN KEY (track_route_id)
     REFERENCES public.trackroute (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.refueling
     ADD CONSTRAINT "Refueling_BusId_fkey" FOREIGN KEY (bus_id)
     REFERENCES public.bus (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.ride
     ADD CONSTRAINT "Ride_BusId_fkey" FOREIGN KEY (bus_id)
     REFERENCES public.bus (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.ride
     ADD CONSTRAINT "Ride_DriverId_fkey" FOREIGN KEY (driver_d)
     REFERENCES public.driver (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.ride
     ADD CONSTRAINT "Ride_TrackId_fkey" FOREIGN KEY (track_id)
     REFERENCES public.track (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.ride_log
     ADD CONSTRAINT "RideLog_RideId_fkey" FOREIGN KEY (ride_id)
     REFERENCES public.ride (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.route
     ADD CONSTRAINT "Route_BusStopId_fkey" FOREIGN KEY (bus_stop_id)
     REFERENCES public.bus_stop (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.route
     ADD CONSTRAINT "Route_LineId_fkey" FOREIGN KEY (line_id)
     REFERENCES public.line (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.track
     ADD CONSTRAINT "Track_BusTypeId_fkey" FOREIGN KEY (bus_type_id)
     REFERENCES public.bus_type (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.track
     ADD CONSTRAINT "Track_LineId_fkey" FOREIGN KEY (line_id)
     REFERENCES public.line (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.trackroute
-    ADD CONSTRAINT "Trackroute_RouteId_fkey" FOREIGN KEY (route_d)
+    ADD CONSTRAINT "Trackroute_RouteId_fkey" FOREIGN KEY (route_id)
     REFERENCES public.route (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS public.trackroute
     ADD CONSTRAINT "Trackroute_TrackId_fkey" FOREIGN KEY (track_id)
     REFERENCES public.track (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
     NOT VALID;
 
 END;
