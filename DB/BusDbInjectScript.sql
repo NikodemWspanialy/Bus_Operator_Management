@@ -51,7 +51,7 @@ insert into bus_type (description, shortcut, capacity) values
 ('podwojny, wysokopodłogowy', 'dh','75');
 
 --5 kierowcow
-insert into driver (name, lastname, license, selary, holidays_days) values
+insert into driver (name, lastname, license, salary, holidays_days) values
 ('Nikodem','Wspanialy','D1',5000,12),
 ('Alan','Pawleta','D2',3000,24),
 ('Kamil','Nabozny','D1',11000,24),
@@ -114,7 +114,7 @@ insert into route  values
 ;
 
 --busy
-insert into bus (bus_type_id, next_car_reviev) values
+insert into bus (bus_type_id, next_car_review) values
 ((select id from bus_type where shortcut = 'sl'), '2024-10-18'),
 ((select id from bus_type where shortcut = 'dl'), '2025-01-12'),
 ((select id from bus_type where shortcut = 'sh'), '2024-08-12'),
@@ -124,7 +124,7 @@ insert into bus (bus_type_id, next_car_reviev) values
 
 --niedostepnosc driverow
 insert into driver_unavailability (driver_id, start_date, end_date, reason) values
-((select id from driver where name = 'Nikodem' and lastname = 'Wspanialy'), '20024-05-12', '20024-05-19', 'urlop')
+((select id from driver where name = 'Nikodem' and lastname = 'Wspanialy'), '2024-05-12', '2024-05-19', 'urlop')
 ;
 
 --track - ktora linia kiedy jedzie

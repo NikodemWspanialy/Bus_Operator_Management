@@ -7,9 +7,9 @@ CREATE TABLE IF NOT EXISTS public.bus
 (
     id serial NOT NULL,
     bus_type_id integer,
-    next_car_reviev date,
+    next_car_review date,
     actual_event_log_id integer,
-    CONSTRAINT "Bus_pkey" PRIMARY KEY (id)
+    CONSTRAINT bus_pkey PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE public.bus
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS public.driver
     name text COLLATE pg_catalog."default" NOT NULL,
     lastname text COLLATE pg_catalog."default" NOT NULL,
     license text COLLATE pg_catalog."default",
-    selary money DEFAULT 4000,
+    salary money DEFAULT 4000,
     holidays_days integer DEFAULT 30,
     CONSTRAINT driver_pkey PRIMARY KEY (id)
 );
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS public.driver_unavailability
     start_date date NOT NULL,
     end_date date NOT NULL,
     reason text COLLATE pg_catalog."default",
-    CONSTRAINT "DriverUnavailability_pkey" PRIMARY KEY (driver_id)
+    CONSTRAINT driver_unavailability_pkey PRIMARY KEY (driver_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.event
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS public.event_log
     status text COLLATE pg_catalog."default",
     start_date date NOT NULL,
     end_date date,
-    CONSTRAINT "EventLog_pkey" PRIMARY KEY (id)
+    CONSTRAINT event_log_pkey PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE public.event_log
@@ -119,10 +119,10 @@ CREATE TABLE IF NOT EXISTS public.ride
 (
     id serial NOT NULL,
     bus_id integer NOT NULL,
-    driver_d integer NOT NULL,
+    driver_id integer NOT NULL,
     track_id integer NOT NULL,
     date date NOT NULL,
-    CONSTRAINT "Ride_pkey" PRIMARY KEY (id)
+    CONSTRAINT ride_pkey PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE public.ride
@@ -133,8 +133,9 @@ CREATE TABLE IF NOT EXISTS public.ride_log
     id integer NOT NULL,
     ride_id integer NOT NULL,
     passengers_number integer,
+	distance integer,
     accident text COLLATE pg_catalog."default",
-    CONSTRAINT "RideLog_pkey" PRIMARY KEY (id)
+    CONSTRAINT ride_log_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS public.route
@@ -143,7 +144,7 @@ CREATE TABLE IF NOT EXISTS public.route
     line_id integer NOT NULL,
     bus_stop_id integer NOT NULL,
     "order" integer NOT NULL,
-    CONSTRAINT "Route_pkey" PRIMARY KEY (id)
+    CONSTRAINT route_pkey PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE public.route
@@ -155,7 +156,7 @@ CREATE TABLE IF NOT EXISTS public.track
     line_id integer NOT NULL,
     start_time time without time zone NOT NULL,
     bus_type_id integer NOT NULL,
-    CONSTRAINT "Track_pkey" PRIMARY KEY (id)
+    CONSTRAINT track_pkey PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE public.track
@@ -167,14 +168,14 @@ CREATE TABLE IF NOT EXISTS public.trackroute
     track_id integer NOT NULL,
     route_id integer NOT NULL,
     "time" time without time zone NOT NULL,
-    CONSTRAINT "Trackroute_pkey" PRIMARY KEY (id)
+    CONSTRAINT trackroute_pkey PRIMARY KEY (id)
 );
 
 COMMENT ON TABLE public.trackroute
     IS 'planowany czas przyjazdu na przystanek';
 
 ALTER TABLE IF EXISTS public.bus
-    ADD CONSTRAINT "Bus_BusTypeId_fkey" FOREIGN KEY (bus_type_id)
+    ADD CONSTRAINT "bus_bus_type_id_fkey" FOREIGN KEY (bus_type_id)
     REFERENCES public.bus_type (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -182,17 +183,17 @@ ALTER TABLE IF EXISTS public.bus
 
 
 ALTER TABLE IF EXISTS public.driver_unavailability
-    ADD CONSTRAINT "DriverUnavailability_DriverId_fkey" FOREIGN KEY (driver_id)
+    ADD CONSTRAINT "driver_unavailability_driver_id_fkey" FOREIGN KEY (driver_id)
     REFERENCES public.driver (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
     NOT VALID;
-CREATE INDEX IF NOT EXISTS "DriverUnavailability_pkey"
-    ON public.driver_unavailability(driver_id);
+-- CREATE INDEX IF NOT EXISTS "DriverUnavailability_pkey"
+--     ON public.driver_unavailability(driver_id);
 
 
 ALTER TABLE IF EXISTS public.event_log
-    ADD CONSTRAINT "EventLog_BusId_fkey" FOREIGN KEY (bus_id)
+    ADD CONSTRAINT "event_log_bus_id_fkey" FOREIGN KEY (bus_id)
     REFERENCES public.bus (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -200,7 +201,7 @@ ALTER TABLE IF EXISTS public.event_log
 
 
 ALTER TABLE IF EXISTS public.event_log
-    ADD CONSTRAINT "EventLog_EventId_fkey" FOREIGN KEY (event_id)
+    ADD CONSTRAINT "event_log_event_id_fkey" FOREIGN KEY (event_id)
     REFERENCES public.event (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -208,15 +209,15 @@ ALTER TABLE IF EXISTS public.event_log
 
 
 ALTER TABLE IF EXISTS public.real_time_trackroute
-    ADD CONSTRAINT "RealTimeTrackroute_RideId_fkey" FOREIGN KEY (ride_id)
+    ADD CONSTRAINT "real_time_trackroute_ride_id_fkey" FOREIGN KEY (ride_id)
     REFERENCES public.ride (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
     NOT VALID;
-
+ 
 
 ALTER TABLE IF EXISTS public.real_time_trackroute
-    ADD CONSTRAINT "RealTimeTrackroute_TrackRouteId_fkey" FOREIGN KEY (track_route_id)
+    ADD CONSTRAINT "real_time_trackroute_trackroute_id_fkey" FOREIGN KEY (track_route_id)
     REFERENCES public.trackroute (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -224,7 +225,7 @@ ALTER TABLE IF EXISTS public.real_time_trackroute
 
 
 ALTER TABLE IF EXISTS public.refueling
-    ADD CONSTRAINT "Refueling_BusId_fkey" FOREIGN KEY (bus_id)
+    ADD CONSTRAINT "refueling_bus_id_fkey" FOREIGN KEY (bus_id)
     REFERENCES public.bus (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -232,7 +233,7 @@ ALTER TABLE IF EXISTS public.refueling
 
 
 ALTER TABLE IF EXISTS public.ride
-    ADD CONSTRAINT "Ride_BusId_fkey" FOREIGN KEY (bus_id)
+    ADD CONSTRAINT "ride_bus_id_fkey" FOREIGN KEY (bus_id)
     REFERENCES public.bus (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -240,7 +241,7 @@ ALTER TABLE IF EXISTS public.ride
 
 
 ALTER TABLE IF EXISTS public.ride
-    ADD CONSTRAINT "Ride_DriverId_fkey" FOREIGN KEY (driver_d)
+    ADD CONSTRAINT "ride_driver_id_fkey" FOREIGN KEY (driver_id)
     REFERENCES public.driver (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -248,7 +249,7 @@ ALTER TABLE IF EXISTS public.ride
 
 
 ALTER TABLE IF EXISTS public.ride
-    ADD CONSTRAINT "Ride_TrackId_fkey" FOREIGN KEY (track_id)
+    ADD CONSTRAINT "ride_track_id_fkey" FOREIGN KEY (track_id)
     REFERENCES public.track (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -256,7 +257,7 @@ ALTER TABLE IF EXISTS public.ride
 
 
 ALTER TABLE IF EXISTS public.ride_log
-    ADD CONSTRAINT "RideLog_RideId_fkey" FOREIGN KEY (ride_id)
+    ADD CONSTRAINT "ride_log_ride_id_fkey" FOREIGN KEY (ride_id)
     REFERENCES public.ride (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -264,7 +265,7 @@ ALTER TABLE IF EXISTS public.ride_log
 
 
 ALTER TABLE IF EXISTS public.route
-    ADD CONSTRAINT "Route_BusStopId_fkey" FOREIGN KEY (bus_stop_id)
+    ADD CONSTRAINT "route_bus_stop_id_fkey" FOREIGN KEY (bus_stop_id)
     REFERENCES public.bus_stop (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -272,7 +273,7 @@ ALTER TABLE IF EXISTS public.route
 
 
 ALTER TABLE IF EXISTS public.route
-    ADD CONSTRAINT "Route_LineId_fkey" FOREIGN KEY (line_id)
+    ADD CONSTRAINT "route_line_id_fkey" FOREIGN KEY (line_id)
     REFERENCES public.line (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -280,7 +281,7 @@ ALTER TABLE IF EXISTS public.route
 
 
 ALTER TABLE IF EXISTS public.track
-    ADD CONSTRAINT "Track_BusTypeId_fkey" FOREIGN KEY (bus_type_id)
+    ADD CONSTRAINT "track_bus_type_id_fkey" FOREIGN KEY (bus_type_id)
     REFERENCES public.bus_type (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -288,7 +289,7 @@ ALTER TABLE IF EXISTS public.track
 
 
 ALTER TABLE IF EXISTS public.track
-    ADD CONSTRAINT "Track_LineId_fkey" FOREIGN KEY (line_id)
+    ADD CONSTRAINT "track_line_id_fkey" FOREIGN KEY (line_id)
     REFERENCES public.line (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -296,7 +297,7 @@ ALTER TABLE IF EXISTS public.track
 
 
 ALTER TABLE IF EXISTS public.trackroute
-    ADD CONSTRAINT "Trackroute_RouteId_fkey" FOREIGN KEY (route_id)
+    ADD CONSTRAINT "trackroute_route_id_fkey" FOREIGN KEY (route_id)
     REFERENCES public.route (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
@@ -304,7 +305,7 @@ ALTER TABLE IF EXISTS public.trackroute
 
 
 ALTER TABLE IF EXISTS public.trackroute
-    ADD CONSTRAINT "Trackroute_TrackId_fkey" FOREIGN KEY (track_id)
+    ADD CONSTRAINT "trackroute_track_id_fkey" FOREIGN KEY (track_id)
     REFERENCES public.track (id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE
