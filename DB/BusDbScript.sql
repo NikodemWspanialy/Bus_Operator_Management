@@ -130,7 +130,7 @@ COMMENT ON TABLE public.ride
 
 CREATE TABLE IF NOT EXISTS public.ride_log
 (
-    id integer NOT NULL,
+    id serial NOT NULL,
     ride_id integer NOT NULL,
     passengers_number integer,
 	distance integer,
