@@ -52,6 +52,7 @@ insert into bus_type (description, shortcut, capacity) values
 
 --5 kierowcow
 insert into driver (name, lastname, license, salary, holidays_days) values
+('Jan', 'Kowalski', 'D2',500,2),
 ('Nikodem','Wspanialy','D1',5000,12),
 ('Alan','Pawleta','D2',3000,24),
 ('Kamil','Nabozny','D1',11000,24),
@@ -115,6 +116,7 @@ insert into route  values
 
 --busy
 insert into bus (bus_type_id, next_car_review) values
+((select id from bus_type where shortcut = 'sl'), '2024-10-16'),
 ((select id from bus_type where shortcut = 'sl'), '2024-10-18'),
 ((select id from bus_type where shortcut = 'dl'), '2025-01-12'),
 ((select id from bus_type where shortcut = 'sh'), '2024-08-12'),
@@ -485,5 +487,53 @@ insert into trackroute (track_id, route_id,time) values
 ((select id from track where line_id = (select id from line where line_name = 'C') and start_time = '08:45:00'), (select id from route r where line_id = (select id from line l where l.line_name = 'C') and r.order = 6), '09:32:00')
 ;
 
+--ride injection
+insert into ride (bus_id, driver_id, track_id, date) values
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '10:00:00'),'2024-05-16'),
+(5,(select id from driver where name = 'Jan' and lastname = 'Kowalski'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '11:00:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '12:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '13:00:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '14:00:00'),'2024-05-16'),
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '15:00:00'),'2024-05-16'),
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '16:00:00'),'2024-05-16'),
+(5,(select id from driver where name = 'Jan' and lastname = 'Kowalski'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '17:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '18:00:00'),'2024-05-16'),
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '19:00:00'),'2024-05-16'),
+(5,(select id from driver where name = 'Jan' and lastname = 'Kowalski'),(select id from track where line_id = (select id from line where line_name = '1') and start_time = '20:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = '2') and start_time = '12:30:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = '2') and start_time = '15:20:00'),'2024-05-16'),
+(1,(select id from driver where name = 'Nikodem' and lastname = 'Wspanialy'),(select id from track where line_id = (select id from line where line_name = '2') and start_time = '18:10:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = '2') and start_time = '22:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = '3') and start_time = '19:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = '3') and start_time = '20:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = '3') and start_time = '21:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = '3') and start_time = '22:00:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = '3') and start_time = '23:00:00'),'2024-05-16'),
+(5,(select id from driver where name = 'Jan' and lastname = 'Kowalski'),(select id from track where line_id = (select id from line where line_name = 'A') and start_time = '09:30:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'A') and start_time = '09:00:00'),'2024-05-16'),
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = 'A') and start_time = '12:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'A') and start_time = '12:30:00'),'2024-05-16'),
+(1,(select id from driver where name = 'Nikodem' and lastname = 'Wspanialy'),(select id from track where line_id = (select id from line where line_name = 'A') and start_time = '15:30:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = 'A') and start_time = '15:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'A') and start_time = '20:00:00'),'2024-05-16'),
+(5,(select id from driver where name = 'Jan' and lastname = 'Kowalski'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '07:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '08:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '09:00:00'),'2024-05-16'),
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '10:00:00'),'2024-05-16'),
+(1,(select id from driver where name = 'Nikodem' and lastname = 'Wspanialy'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '11:00:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '12:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '13:00:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '14:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '15:00:00'),'2024-05-16'),
+(1,(select id from driver where name = 'Nikodem' and lastname = 'Wspanialy'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '16:00:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '17:00:00'),'2024-05-16'),
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '18:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'B') and start_time = '19:00:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'C') and start_time = '06:15:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = 'C') and start_time = '06:45:00'),'2024-05-16'),
+(6,(select id from driver where name = 'Lukasz' and lastname = 'Wojczuk'),(select id from track where line_id = (select id from line where line_name = 'C') and start_time = '07:15:00'),'2024-05-16'),
+(3,(select id from driver where name = 'Kamil' and lastname = 'Nabozny'),(select id from track where line_id = (select id from line where line_name = 'C') and start_time = '07:45:00'),'2024-05-16'),
+(4,(select id from driver where name = 'Bartosz' and lastname = 'Pokorski'),(select id from track where line_id = (select id from line where line_name = 'C') and start_time = '08:15:00'),'2024-05-16'),
+(2,(select id from driver where name = 'Alan' and lastname = 'Pawleta'),(select id from track where line_id = (select id from line where line_name = 'C') and start_time = '08:45:00'),'2024-05-16')
 
 END;
