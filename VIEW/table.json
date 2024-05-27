@@ -1,0 +1,32 @@
+[
+ {
+   "username": "booker12",
+   "identifier": 9012,
+   "firstName": "Rachel",
+   "lastName": "Booker"
+ },
+ {
+   "username": "grey07",
+   "identifier": 2070,
+   "firstName": "Laura",
+   "lastName": "Grey"
+ },
+ {
+   "username": "johnson81",
+   "identifier": 4081,
+   "firstName": "Craig",
+   "lastName": "Johnson"
+ },
+ {
+   "username": "jenkins46",
+   "identifier": 9346,
+   "firstName": "Mary",
+   "lastName": "Jenkins"
+ },
+ {
+   "username": "smith79",
+   "identifier": 5079,
+   "firstName": "Jamie",
+   "lastName": "Smith"
+ }
+]
