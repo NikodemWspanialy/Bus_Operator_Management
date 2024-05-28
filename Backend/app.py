@@ -4,23 +4,31 @@ from database import create_connection, error
 from Queries.driverDB import driverGetAll, driverCreate, driverGetById, driverDelete, driverUpdate
 from Queries.BusDB import busGetAll, busCreate, busDelete, busGetById, busUpdate
 from Queries.routeDB import routeGetByLineId
+from Queries.busStopScheduleDB import busStopScheduleGetAllByBusStopId
+from Queries.HolidaysDB import holidaysCreate, holidaysDelete,holidaysGetAll, holidaysGetByDriverId, holidaysUpdate
+from Queries.eventDB import eventGetAll, eventCreate, eventDelete, eventGetById, eventUpdate
 
 app = Flask(__name__)
 api = Api(app, version='1.0', title='Bus Management API',
           description='A simple API for managing buses, drivers, and routes', doc='/swagger/')
-
+#zrobione
 ns_driver = api.namespace('drivers', description='Operacje kierowców') #driver
 ns_bus = api.namespace('bus', description='Operacje busów') #bus
 ns_route = api.namespace('route', description='Operacje kolejności przystanków danej linii') #route line(nazwa, id?) przystanki
-ns_trackroute = api.namespace('trackroute', description='O której godzinie dana linii na jakim przystanku odjeżdza') #trackroute
+ns_bus_stop_schedule = api.namespace('bus_stop_schedule', description='odjazdy  z przystanku(id) busow')
 ns_holidays = api.namespace('holidays', description='urlopy') #holiday
-ns_track = api.namespace('track', description='Kazdy odjazd danego autobusu z startowej pozycji') #track
-ns_combustion = api.namespace('combustion', description='spalanie pojazdu') #
-ns_failure_rate = api.namespace('failure_rate', description='jakies raporty')
-ns_profitability = api.namespace('profitability', description='jakies raporty - rentownosc')
-ns_driver_combustion = api.namespace('driver_combustion', description='spalanie kierowców')
-
 ns_events = api.namespace('events', description='sytuacje specjalne dotyczace autobusów') #eventy
+#do zaimplementowania
+ns_bus_type = api.namespace('bus_type', description='rodzaje busow')
+ns_combustion = api.namespace('combustion', description='spalanie pojazdu') 
+ns_driver_combustion = api.namespace('driver_combustion', description='spalanie kierowców')
+ns_profitability = api.namespace('profitability', description='raporty - rentownosc')
+ns_failure_rate = api.namespace('failure_rate', description='awaryjnosc raporty')
+#do zrobienia
+ns_event_log = api.namespace('event_log', description='zdarzenia przypisane do konkretnych busow')
+ns_refuiling = api.namespace('refueling', description='tankowanie')
+ns_ride = api.namespace('ride', description='przejazdy z kierowca, busem, linia, data')
+ns_ride_log = api.namespace('ride_log', description='cala historia przejazdow z parametrami')
 
 driver_model = api.model('Driver', {
     'name': fields.String(required=True, description='Driver first name'),
@@ -143,47 +151,34 @@ class RouteList(Resource):
         except Exception as e:
             return error(e)
 
-
-@ns_trackroute.route('/get/<int:line_id>')
-class TrackRoute(Resource):
-    def get(self, line_id):
-        """Get a specific track route by ID"""
+#bus_stop_schedule
+@ns_bus_stop_schedule.route('/get/<int:id>')
+class BusStopDepatureList(Resource):
+    def get(self, id):
+        """Get all depature from specify bus stop"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."trackroute" WHERE id = %s'
-            cursor.execute(query, (line_id,))
-            trackroute = cursor.fetchone()
-            cursor.close()
-            connection.close()
-            return {"trackroute": trackroute}
+          return busStopScheduleGetAllByBusStopId(id)
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)
 
-
+#holidays / NIEDOSTEPNOSC     
+ns_holidays.route('/get/<int:id>')
+class HolidaysGet(Resource):
+    def get(self, id):
+        """Get holidays by driver_id"""
+        try:
+            return holidaysGetByDriverId(id)
+        except Exception as e:
+            return error(e)
+        
 @ns_holidays.route('/get')
 class HolidaysList(Resource):
     def get(self):
         """List all holidays"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."holidays"'
-            cursor.execute(query)
-            holidays = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"holidays": holidays}
+            return holidaysGetAll()
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)
 
 
 @ns_holidays.route('/add')
@@ -191,25 +186,9 @@ class HolidaysAdd(Resource):
     def post(self):
         """Add a new holiday"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            data = request.json
-            driver_id = data.get('driver_id')
-            start_date = data.get('start_date')
-            end_date = data.get('end_date')
-
-            cursor.execute("INSERT INTO holidays (driver_id, start_date, end_date) VALUES "
-                           "(%s, %s, %s)", (driver_id, start_date, end_date))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Nowy urlop został dodany pomyślnie"}, 201
+            return holidaysCreate(request.json)
         except Exception as e:
-            print("Wystąpił błąd podczas dodawania urlopu:", e)
-            return {"error": "Wystąpił błąd podczas dodawania urlopu"}, 500
+            return error(e)
 
 
 @ns_holidays.route('/delete/<int:driver_id>')
@@ -217,251 +196,173 @@ class HolidaysDelete(Resource):
     def delete(self, driver_id):
         """Delete holidays by driver ID"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM holidays WHERE driver_id = %s", (driver_id,))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Urlop został usunięty pomyślnie"}, 200
+            return holidaysDelete(driver_id)
         except Exception as e:
-            print("Wystąpił błąd podczas usuwania urlopu:", e)
-            return {"error": "Wystąpił błąd podczas usuwania urlopu"}, 500
+            return error(e)
 
 
 @ns_holidays.route('/update/<int:driver_id>')
 class HolidaysUpdate(Resource):
     def put(self, driver_id):
-        """Update holidays by driver ID"""
+        """Update holidays by driver_ID"""
         try:
-            if not request.json:
-                return {"error": "Nieprawidłowy format danych JSON"}, 400
-
-            data = request.json
-            start_date = data.get('start_date')
-            end_date = data.get('end_date')
-
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            cursor.execute("""
-                UPDATE holidays
-                SET start_date = %s, end_date = %s
-                WHERE driver_id = %s
-            """, (start_date, end_date, driver_id))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Dane urlopu zostały zaktualizowane pomyślnie"}, 200
+            return holidaysUpdate(request.json)
         except Exception as e:
-            print("Wystąpił błąd podczas aktualizowania danych urlopu:", e)
-            return {"error": "Wystąpił błąd podczas aktualizowania danych urlopu"}, 500
+           return error(e)
 
-
+#EVENTY
 @ns_events.route('/get')
 class EventsList(Resource):
     def get(self):
         """List all events"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."events"'
-            cursor.execute(query)
-            events = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"events": events}
+            return eventGetAll()
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
-
+            return error(e)
 
 @ns_events.route('/add')
 class EventsAdd(Resource):
     def post(self):
         """Add a new event"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            data = request.json
-            bus_id = data.get('bus_id')
-            event_type = data.get('event_type')
-            event_date = data.get('event_date')
-
-            cursor.execute("INSERT INTO events (bus_id, event_type, event_date) VALUES "
-                           "(%s, %s, %s)", (bus_id, event_type, event_date))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Nowe wydarzenie zostało dodane pomyślnie"}, 201
+            return eventCreate(request.json)
         except Exception as e:
-            print("Wystąpił błąd podczas dodawania wydarzenia:", e)
-            return {"error": "Wystąpił błąd podczas dodawania wydarzenia"}, 500
+            return error(e)
 
+@ns_events.route('/update/<int:id>')
+class EventsAdd(Resource):
+    def put(self, id):
+        """Update event by specify Id"""
+        try:
+            return eventUpdate(request.json, id)
+        except Exception as e:
+            return error(e)
 
 @ns_events.route('/delete/<int:id>')
 class EventsDelete(Resource):
     def delete(self, id):
         """Delete an event by ID"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM events WHERE id = %s", (id,))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Wydarzenie zostało usunięte pomyślnie"}, 200
+            return eventDelete(id)
         except Exception as e:
-            print("Wystąpił błąd podczas usuwania wydarzenia:", e)
-            return {"error": "Wystąpił błąd podczas usuwania wydarzenia"}, 500
+            return error(e)
 
+@ns_events.route('/get/<int:id>')
+class EventsGet(Resource):
+    def get(self, id):
+        """Get event by id"""
+        try:
+            return eventGetById(id)
+        except Exception as e:
+            return error(e)
 
-@ns_track.route('/get')
-class TrackList(Resource):
+#################################
+### tu zaczac nastepnym razem ###
+#################################
+
+#bus type
+@ns_bus_type.route('/get')
+class BusTypeList(Resource):
     def get(self):
-        """List all tracks"""
+        """List all bus type"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."track"'
-            cursor.execute(query)
-            tracks = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"tracks": tracks}
+            raise NotImplementedError
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)    
+        
+@ns_bus_type.route('/get/<int:id>')
+class BustypeGet(Resource):
+    def get(self, id):
+        """get specify bus type by id"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
 
+@ns_bus_type.route('/delete/<int:id>')
+class BusTypeDelete(Resource):
+    def delete(self, id):
+        """delete bus with id"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
 
-@ns_track.route('/add')
-class TrackAdd(Resource):
+@ns_bus_type.route('/add')
+class BusTypeAdd(Resource):
     def post(self):
-        """Add a new track"""
+        """Create a new bus type"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            data = request.json
-            route_id = data.get('route_id')
-            bus_id = data.get('bus_id')
-            driver_id = data.get('driver_id')
-            start_time = data.get('start_time')
-            end_time = data.get('end_time')
-
-            cursor.execute("INSERT INTO track (route_id, bus_id, driver_id, start_time, end_time) VALUES "
-                           "(%s, %s, %s, %s, %s)", (route_id, bus_id, driver_id, start_time, end_time))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Nowy kurs został dodany pomyślnie"}, 201
+            raise NotImplementedError
         except Exception as e:
-            print("Wystąpił błąd podczas dodawania kursu:", e)
-            return {"error": "Wystąpił błąd podczas dodawania kursu"}, 500
+            return error(e)
 
+@ns_bus_type.route('/update/<int:id>')
+class BusTypeEdit(Resource):
+    def post(self, id):
+        """edit specify bus typw with id"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
 
+#spalanie pojazdu 
 @ns_combustion.route('/get/<int:bus_id>')
 class CombustionList(Resource):
     def get(self, bus_id):
-        """List all combustions for a specific bus"""
+        """Parametry spalania kazdego pojazdu """
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."combustion" WHERE bus_id = %s'
-            cursor.execute(query, (bus_id,))
-            combustions = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"combustions": combustions}
+            raise NotImplementedError
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)
 
-
-@ns_failure_rate.route('/get/<int:bus_id>')
-class FailureRate(Resource):
-    def get(self, bus_id):
-        """Get the failure rate for a specific bus"""
-        try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."failure_rate" WHERE bus_id = %s'
-            cursor.execute(query, (bus_id,))
-            failure_rate = cursor.fetchone()
-            cursor.close()
-            connection.close()
-            return {"failure_rate": failure_rate}
-        except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
-
-
-@ns_profitability.route('/get/<int:line_id>')
-class Profitability(Resource):
-    def get(self, line_id):
-        """Get the profitability for a specific line"""
-        try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."profitability" WHERE line_id = %s'
-            cursor.execute(query, (line_id,))
-            profitability = cursor.fetchone()
-            cursor.close()
-            connection.close()
-            return {"profitability": profitability}
-        except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
-
-
+#spalanie kierowcow 
 @ns_driver_combustion.route('/get/<int:driver_id>')
 class DriverCombustion(Resource):
     def get(self, driver_id):
-        """Get the combustion rate for a specific driver"""
+        """get spalaanie kierowcy"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."driver_combustion" WHERE driver_id = %s'
-            cursor.execute(query, (driver_id,))
-            driver_combustion = cursor.fetchone()
-            cursor.close()
-            connection.close()
-            return {"driver_combustion": driver_combustion}
+            raise NotImplementedError
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)
 
+#renotownosc linii
+@ns_profitability.route('/get/<int:line_id>')
+class Profitability(Resource):
+    def get(self, line_id):
+        """Get rentownosc linii po Id linii"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_profitability.route('/get')
+class Profatibility(Resource):
+    def get(self):
+        """Get rentownosc linii wszystkich"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+#awaryjnosc - dodac dla wszystkich lacznie, dla pojedynczego wylistowane, dla jednego by ID
+@ns_failure_rate.route('/get/<int:bus_id>')
+class FailureRate(Resource):
+    def get(self, bus_id):
+        """Get the awaryjnosc rate for a specific bus"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+        
+@ns_failure_rate.route('/get')
+class FailureRate(Resource):
+    def get(self):
+        """Get the awaryjnosc rate for every bus"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
 
 if __name__ == '__main__':
     app.run(debug=True)
