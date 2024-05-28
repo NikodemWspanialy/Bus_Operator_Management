@@ -1,22 +1,26 @@
 from flask import Flask, jsonify, request
 from flask_restx import Api, Resource, fields
-from database import create_connection
+from database import create_connection, error
+from Queries.driverDB import driverGetAll, driverCreate, driverGetById, driverDelete, driverUpdate
+from Queries.BusDB import busGetAll, busCreate, busDelete, busGetById, busUpdate
+from Queries.routeDB import routeGetByLineId
 
 app = Flask(__name__)
 api = Api(app, version='1.0', title='Bus Management API',
           description='A simple API for managing buses, drivers, and routes', doc='/swagger/')
 
-ns_driver = api.namespace('drivers', description='Driver operations')
-ns_bus = api.namespace('bus', description='Bus operations')
-ns_route = api.namespace('route', description='Route operations')
-ns_trackroute = api.namespace('trackroute', description='Track route operations')
-ns_holidays = api.namespace('holidays', description='Holidays operations')
-ns_events = api.namespace('events', description='Events operations')
-ns_track = api.namespace('track', description='Track operations')
-ns_combustion = api.namespace('combustion', description='Combustion operations')
-ns_failure_rate = api.namespace('failure_rate', description='Failure rate operations')
-ns_profitability = api.namespace('profitability', description='Profitability operations')
-ns_driver_combustion = api.namespace('driver_combustion', description='Driver combustion operations')
+ns_driver = api.namespace('drivers', description='Operacje kierowców') #driver
+ns_bus = api.namespace('bus', description='Operacje busów') #bus
+ns_route = api.namespace('route', description='Operacje kolejności przystanków danej linii') #route line(nazwa, id?) przystanki
+ns_trackroute = api.namespace('trackroute', description='O której godzinie dana linii na jakim przystanku odjeżdza') #trackroute
+ns_holidays = api.namespace('holidays', description='urlopy') #holiday
+ns_track = api.namespace('track', description='Kazdy odjazd danego autobusu z startowej pozycji') #track
+ns_combustion = api.namespace('combustion', description='spalanie pojazdu') #
+ns_failure_rate = api.namespace('failure_rate', description='jakies raporty')
+ns_profitability = api.namespace('profitability', description='jakies raporty - rentownosc')
+ns_driver_combustion = api.namespace('driver_combustion', description='spalanie kierowców')
+
+ns_events = api.namespace('events', description='sytuacje specjalne dotyczace autobusów') #eventy
 
 driver_model = api.model('Driver', {
     'name': fields.String(required=True, description='Driver first name'),
@@ -32,27 +36,15 @@ bus_model = api.model('Bus', {
     'actual_event_log_id': fields.Integer(required=True, description='Actual event log ID')
 })
 
-
+#DRIVER API
 @ns_driver.route('/get')
 class DriverList(Resource):
     def get(self):
         """List all drivers"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."driver"'
-            cursor.execute(query)
-            drivers = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"drivers": drivers}
+            return driverGetAll()
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
-
+            return error(e)
 
 @ns_driver.route('/add')
 class DriverAdd(Resource):
@@ -60,68 +52,27 @@ class DriverAdd(Resource):
     def post(self):
         """Add a new driver"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            data = request.json
-            name = data.get('name')
-            lastname = data.get('lastname')
-            license = data.get('license')
-            salary = data.get('salary')
-            holidays_days = data.get('holidays_days')
-
-            cursor.execute("INSERT INTO driver (name, lastname, license, salary, holidays_days) VALUES "
-                           "(%s, %s, %s, %s, %s)", (name, lastname, license, salary, holidays_days))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Nowy kierowca został dodany pomyślnie"}, 201
+            return driverCreate(request.json)
         except Exception as e:
-            print("Wystąpił błąd podczas dodawania kierowcy:", e)
-            return {"error": "Wystąpił błąd podczas dodawania kierowcy"}, 500
+            return error(e)
 
 @ns_driver.route('/get/<int:id>')
 class DriverGet(Resource):
     def get(self,id):
         """Get a driver by ID"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM driver WHERE id = %s'
-            cursor.execute(query, (id,))
-            driver = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"driver": driver}
+            return driverGetById(id)
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)
         
-
 @ns_driver.route('/delete/<int:id>')
 class DriverDelete(Resource):
     def delete(self, id):
         """Delete a driver by ID"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM driver WHERE id = %s", (id,))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Kierowca został usunięty pomyślnie"}, 200
+            return driverDelete(id)
         except Exception as e:
-            print("Wystąpił błąd podczas usuwania kierowcy:", e)
-            return {"error": "Wystąpił błąd podczas usuwania kierowcy"}, 500
-
+            return error(e)
 
 @ns_driver.route('/update/<int:id>')
 class DriverUpdate(Resource):
@@ -129,58 +80,28 @@ class DriverUpdate(Resource):
     def put(self, id):
         """Update a driver by ID"""
         try:
-            if not request.json:
-                return {"error": "Nieprawidłowy format danych JSON"}, 400
-
-            data = request.json
-            name = data.get('name')
-            lastname = data.get('lastname')
-            license = data.get('license')
-            salary = data.get('salary')
-            holidays_days = data.get('holidays_days')
-
-            if not all([name, lastname, license]):
-                return {"error": "Brak wymaganych pól"}, 400
-
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            cursor.execute("""
-                UPDATE driver
-                SET name = %s, lastname = %s, license = %s, salary = %s, holidays_days = %s
-                WHERE id = %s
-            """, (name, lastname, license, salary, holidays_days, id))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Dane kierowcy zostały zaktualizowane pomyślnie"}, 200
+            return driverUpdate(request.json, id)
         except Exception as e:
-            print("Wystąpił błąd podczas aktualizowania danych kierowcy:", e)
-            return {"error": "Wystąpił błąd podczas aktualizowania danych kierowcy"}, 500
+            return error(e)
 
-
+#BUS API
 @ns_bus.route('/get')
 class BusList(Resource):
     def get(self):
         """List all buses"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."bus"'
-            cursor.execute(query)
-            buses = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"buses": buses}
+            return busGetAll()
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)
 
+@ns_bus.route('/get/<int:id>')
+class BusGet(Resource):
+    def get(self, id):
+        """"Bus by id"""
+        try: 
+            return busGetById(id)
+        except Exception as e:
+            return error(e)
 
 @ns_bus.route('/add')
 class BusAdd(Resource):
@@ -188,45 +109,18 @@ class BusAdd(Resource):
     def post(self):
         """Add a new bus"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            data = request.json
-            bus_type_id = data.get('bus_type_id')
-            next_car_review = data.get('next_car_review')
-            actual_event_log_id = data.get('actual_event_log_id')
-
-            cursor.execute("INSERT INTO bus (bus_type_id, next_car_review, actual_event_log_id) VALUES "
-                           "(%s, %s, %s)", (bus_type_id, next_car_review, actual_event_log_id))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Nowy autobus został dodany pomyślnie"}, 201
+            return busCreate(request.json)
         except Exception as e:
-            print("Wystąpił błąd podczas dodawania autobusu:", e)
-            return {"error": "Wystąpił błąd podczas dodawania autobusu"}, 500
-
+            return error(e)
 
 @ns_bus.route('/delete/<int:id>')
 class BusDelete(Resource):
     def delete(self, id):
         """Delete a bus by ID"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM bus WHERE id = %s", (id,))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Autobus został usunięty pomyślnie"}, 200
+            return busDelete()
         except Exception as e:
-            print("Wystąpił błąd podczas usuwania autobusu:", e)
-            return {"error": "Wystąpił błąd podczas usuwania autobusu"}, 500
+            return error(e)
 
 
 @ns_bus.route('/update/<int:id>')
@@ -235,60 +129,24 @@ class BusUpdate(Resource):
     def put(self, id):
         """Update a bus by ID"""
         try:
-            if not request.json:
-                return {"error": "Nieprawidłowy format danych JSON"}, 400
-
-            data = request.json
-            bus_type_id = data.get('bus_type_id')
-            next_car_review = data.get('next_car_review')
-            actual_event_log_id = data.get('actual_event_log_id')
-
-            if not all([bus_type_id, next_car_review]):
-                return {"error": "Brak wymaganych pól"}, 400
-
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            cursor.execute("""
-                UPDATE bus
-                SET bus_type_id = %s, next_car_review = %s, actual_event_log_id = %s
-                WHERE id = %s
-            """, (bus_type_id, next_car_review, actual_event_log_id, id))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return {"message": "Dane autobusu zostały zaktualizowane pomyślnie"}, 200
+            return busUpdate(request.json, id)
         except Exception as e:
-            print("Wystąpił błąd podczas aktualizowania danych autobusu:", e)
-            return {"error": "Wystąpił błąd podczas aktualizowania danych autobusu"}, 500
+            return error(e)
 
-
+#ROUTE API
 @ns_route.route('/get/<int:line_id>')
 class RouteList(Resource):
     def get(self, line_id):
-        """List all routes for a specific line"""
+        """List all busStop with order for a specific line"""
         try:
-            connection = create_connection()
-            if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-            cursor = connection.cursor()
-            query = 'SELECT * FROM public."route" WHERE line_id = %s'
-            cursor.execute(query, (line_id,))
-            routes = cursor.fetchall()
-            cursor.close()
-            connection.close()
-            return {"routes": routes}
+            return routeGetByLineId(line_id)
         except Exception as e:
-            print("Wystąpił błąd podczas pobierania danych:", e)
-            return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+            return error(e)
 
 
-@ns_trackroute.route('/get/<int:id>')
+@ns_trackroute.route('/get/<int:line_id>')
 class TrackRoute(Resource):
-    def get(self, id):
+    def get(self, line_id):
         """Get a specific track route by ID"""
         try:
             connection = create_connection()
@@ -297,7 +155,7 @@ class TrackRoute(Resource):
 
             cursor = connection.cursor()
             query = 'SELECT * FROM public."trackroute" WHERE id = %s'
-            cursor.execute(query, (id,))
+            cursor.execute(query, (line_id,))
             trackroute = cursor.fetchone()
             cursor.close()
             connection.close()

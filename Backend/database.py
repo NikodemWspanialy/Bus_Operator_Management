@@ -18,5 +18,9 @@ def create_connection():
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
         return None
+    
+def error(e):
+    print("Wystąpił błąd podczas pobierania danych:", e)
+    return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
 
 
