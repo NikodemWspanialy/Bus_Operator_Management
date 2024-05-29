@@ -1,74 +1,79 @@
 from database import create_connection
 from Queries.Extends.responseExtend import concatNameValue
 
-def eventGetAll():
+def busTypeGetAll():
   connection = create_connection()
   if connection is None:
     return {"error": "Nie udało się połączyć z bazą danych"}, 500
   cursor = connection.cursor()
-  query = 'SELECT * FROM event'
+  query = 'select * from bus_type'
   cursor.execute(query)
   columns = [desc[0] for desc in cursor.description]
-  events = cursor.fetchall()
+  data = cursor.fetchall()
   cursor.close()
   connection.close()
-  response = concatNameValue(columns, events)
-  return {"events": response}
+  response = concatNameValue(columns, data)
+  return {"busTypes:": response}
 
-def eventGetById(id):
-  connection = create_connection()
-  if connection is None:
-                return {"error": "Nie udało się połączyć z bazą danych"}, 500
-
-  cursor = connection.cursor()
-  query = 'SELECT * FROM event WHERE id = %s'
-  cursor.execute(query, (id,))
-  columns = [desc[0] for desc in cursor.description]
-  events = cursor.fetchall()
-  cursor.close()
-  connection.close()
-  response = concatNameValue(columns, events)
-  return {"event": response}
-
-
-def eventCreate(data):
-  name = data.get('name')
-  description = data.get('description')
+def busTypeGetById(id):
   connection = create_connection()
   if connection is None:
     return {"error": "Nie udało się połączyć z bazą danych"}, 500
   cursor = connection.cursor()
-  cursor.execute("INSERT INTO event (name, description) VALUES (%s, %s)", (name, description))
-  connection.commit()
-  query = 'SELECT id FROM event where name=%s and description=%s'
-  cursor.execute(query,(name, description))
-  event_id = cursor.fetchall()
+  query = 'SELECT * FROM bus_type WHERE id = %s'
+  cursor.execute(query, (id,))
+  columns = [desc[0] for desc in cursor.description]
+  data = cursor.fetchall()
   cursor.close()
   connection.close()
-  return {"new_event_id": event_id}, 201
+  response = concatNameValue(columns, data)
+  return {"bus_type": response}
 
 
-def eventDelete(id):
+def busTypeCreate(data):
+  description = data.get('description')
+  shortcut = data.get('shortcut')
+  capacity = data.get('capacity')
+
+  connection = create_connection()
+  if connection is None:
+    return {"error": "Nie udało się połączyć z bazą danych"}, 500
+
+  cursor = connection.cursor()
+  cursor.execute("INSERT INTO bus_type (description, shortcut, capacity) VALUES (%s, %s, %s)", (description, shortcut, capacity))
+  connection.commit()
+
+  query = 'SELECT id FROM bus_type where description=%s and shortcut=%s'
+  cursor.execute(query,(description, shortcut))
+  bustype_id = cursor.fetchall()
+
+  cursor.close()
+  connection.close()
+  return {"new_bus_type_id": bustype_id}, 201
+
+
+def busTypeDelete(id):
   connection = create_connection()
   if connection is None:
                 return {"error": "Nie udało się połączyć z bazą danych"}, 500
 
   cursor = connection.cursor()
-  cursor.execute("DELETE FROM event WHERE id = %s", (id,))
+  cursor.execute("DELETE FROM bus_type WHERE id = %s", (id,))
   connection.commit()
   cursor.close()
   connection.close()
-  return {"message": "event został usunięty pomyślnie"}, 200
+  return {"message": "typ busa został usunięty pomyślnie"}, 200
 
 
-def eventUpdate(data, id):
+def busTypeUpdate(data, id):
   if not data:
     return {"error": "Nieprawidłowy format danych JSON"}, 400
 
-  name = data.get('name')
   description = data.get('description')
+  shortcut = data.get('shortcut')
+  capacity = data.get('capacity')
 
-  if not all([name, description]):
+  if not all([description, shortcut, capacity]):
    return {"error": "Brak wymaganych pól"}, 400
 
   connection = create_connection()
@@ -76,12 +81,10 @@ def eventUpdate(data, id):
     return {"error": "Nie udało się połączyć z bazą danych"}, 500
 
   cursor = connection.cursor()
-  cursor.execute("""
-    UPDATE event SET name = %s, description = %s WHERE id = %s
-    """, (name, description, id))
+  cursor.execute("""UPDATE bus_type SET description = %s, shortcut = %s, capacity = %s WHERE id = %s""", (description, shortcut, capacity, id))
   connection.commit()
-  query = 'Select id from event where name = %s and description = %s'
-  event_id = cursor.execute(query, (name, description))
+  query = 'Select id from bus_type where description = %s and shortcut = %s'
+  updated_bus_type_id = cursor.execute(query, (description, shortcut))
   cursor.close()
   connection.close()
-  return {"updated_event_id": event_id}, 200
+  return {"updated_bus_type_id": updated_bus_type_id}, 200

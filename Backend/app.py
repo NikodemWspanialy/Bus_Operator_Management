@@ -7,24 +7,26 @@ from Queries.routeDB import routeGetByLineId
 from Queries.busStopScheduleDB import busStopScheduleGetAllByBusStopId
 from Queries.HolidaysDB import holidaysCreate, holidaysDelete,holidaysGetAll, holidaysGetByDriverId, holidaysUpdate
 from Queries.eventDB import eventGetAll, eventCreate, eventDelete, eventGetById, eventUpdate
+from Queries.busTypeDB import busTypeCreate, busTypeDelete, busTypeGetAll, busTypeGetById, busTypeUpdate
+from Queries.combusionDB import combutionGet
+from Queries.driverCombusionDB import driverCombutionGet
 
 app = Flask(__name__)
-api = Api(app, version='1.0', title='Bus Management API',
+api = Api(app, version='2.0', title='Bus Management API',
           description='A simple API for managing buses, drivers, and routes', doc='/swagger/')
 #zrobione
-ns_driver = api.namespace('drivers', description='Operacje kierowców') #driver
-ns_bus = api.namespace('bus', description='Operacje busów') #bus
-ns_route = api.namespace('route', description='Operacje kolejności przystanków danej linii') #route line(nazwa, id?) przystanki
+ns_driver = api.namespace('drivers', description='Operacje kierowców') 
+ns_bus = api.namespace('bus', description='Operacje busów') #bus powinien miec dodana date przegladu bo nie ma w query
+ns_route = api.namespace('route', description='Operacje kolejności przystanków danej linii') 
 ns_bus_stop_schedule = api.namespace('bus_stop_schedule', description='odjazdy  z przystanku(id) busow')
-ns_holidays = api.namespace('holidays', description='urlopy') #holiday
-ns_events = api.namespace('events', description='sytuacje specjalne dotyczace autobusów') #eventy
-#do zaimplementowania
+ns_holidays = api.namespace('holidays', description='urlopy') #problem z delete i post (pewnie nie bedzie dodane bo nie ma id w bazie narazie), get cos nie dziala?
+ns_events = api.namespace('events', description='sytuacje specjalne dotyczace autobusów')
 ns_bus_type = api.namespace('bus_type', description='rodzaje busow')
 ns_combustion = api.namespace('combustion', description='spalanie pojazdu') 
 ns_driver_combustion = api.namespace('driver_combustion', description='spalanie kierowców')
+#do zaimplementowania
 ns_profitability = api.namespace('profitability', description='raporty - rentownosc')
 ns_failure_rate = api.namespace('failure_rate', description='awaryjnosc raporty')
-#do zrobienia
 ns_event_log = api.namespace('event_log', description='zdarzenia przypisane do konkretnych busow')
 ns_refuiling = api.namespace('refueling', description='tankowanie')
 ns_ride = api.namespace('ride', description='przejazdy z kierowca, busem, linia, data')
@@ -42,6 +44,20 @@ bus_model = api.model('Bus', {
     'bus_type_id': fields.Integer(required=True, description='Bus type ID'),
     'next_car_review': fields.String(required=True, description='Next car review date'),
     'actual_event_log_id': fields.Integer(required=True, description='Actual event log ID')
+})
+holiday_model = api.model('Holiday', {
+    'driver_id': fields.Integer(required=True, description='Driver ID'),
+    'start_date': fields.String(required=True, description='start date format YYYY-MM-DD'),
+    'end_date': fields.String(required=True, description='end date format YYYY-MM-DD')
+})
+event_model = api.model('Event', {
+    'name': fields.String(required=True, description='name of event'),
+    'description': fields.String(required=True, description='event description')
+})
+bus_type_model = api.model('BusType', {
+    'description': fields.String(required=True, description='bus type description'),
+    'shortcut': fields.String(required=True, description='bus type shortcut'),
+    'capacity': fields.Integer(required=True, description='bus type capacity')
 })
 
 #DRIVER API
@@ -183,6 +199,7 @@ class HolidaysList(Resource):
 
 @ns_holidays.route('/add')
 class HolidaysAdd(Resource):
+    @ns_holidays.expect(holiday_model)
     def post(self):
         """Add a new holiday"""
         try:
@@ -203,6 +220,7 @@ class HolidaysDelete(Resource):
 
 @ns_holidays.route('/update/<int:driver_id>')
 class HolidaysUpdate(Resource):
+    @ns_holidays.expect(holiday_model)
     def put(self, driver_id):
         """Update holidays by driver_ID"""
         try:
@@ -222,6 +240,7 @@ class EventsList(Resource):
 
 @ns_events.route('/add')
 class EventsAdd(Resource):
+    @ns_events.expect(event_model)
     def post(self):
         """Add a new event"""
         try:
@@ -231,6 +250,7 @@ class EventsAdd(Resource):
 
 @ns_events.route('/update/<int:id>')
 class EventsAdd(Resource):
+    @ns_events.expect(event_model)
     def put(self, id):
         """Update event by specify Id"""
         try:
@@ -256,17 +276,13 @@ class EventsGet(Resource):
         except Exception as e:
             return error(e)
 
-#################################
-### tu zaczac nastepnym razem ###
-#################################
-
 #bus type
 @ns_bus_type.route('/get')
 class BusTypeList(Resource):
     def get(self):
         """List all bus type"""
         try:
-            raise NotImplementedError
+            return busTypeGetAll()
         except Exception as e:
             return error(e)    
         
@@ -275,7 +291,7 @@ class BustypeGet(Resource):
     def get(self, id):
         """get specify bus type by id"""
         try:
-            raise NotImplementedError
+            return busTypeGetById(id)
         except Exception as e:
             return error(e)
 
@@ -284,45 +300,47 @@ class BusTypeDelete(Resource):
     def delete(self, id):
         """delete bus with id"""
         try:
-            raise NotImplementedError
+            return busTypeDelete(id)
         except Exception as e:
             return error(e)
 
 @ns_bus_type.route('/add')
 class BusTypeAdd(Resource):
+    @ns_bus_type.expect(bus_type_model)
     def post(self):
         """Create a new bus type"""
         try:
-            raise NotImplementedError
+            return busTypeCreate(request.json)
         except Exception as e:
             return error(e)
 
 @ns_bus_type.route('/update/<int:id>')
 class BusTypeEdit(Resource):
-    def post(self, id):
+    @ns_bus_type.expect(bus_type_model)
+    def put(self, id):
         """edit specify bus typw with id"""
         try:
-            raise NotImplementedError
+            return busTypeUpdate(request.json, id)
         except Exception as e:
             return error(e)
 
 #spalanie pojazdu 
-@ns_combustion.route('/get/<int:bus_id>')
+@ns_combustion.route('/get/<int:bus_id>/<string:data>')
 class CombustionList(Resource):
-    def get(self, bus_id):
+    def get(self, bus_id, data):
         """Parametry spalania kazdego pojazdu """
         try:
-            raise NotImplementedError
+            return combutionGet(bus_id, data)
         except Exception as e:
             return error(e)
 
 #spalanie kierowcow 
-@ns_driver_combustion.route('/get/<int:driver_id>')
+@ns_driver_combustion.route('/get/<int:driver_id>/<string:data>')
 class DriverCombustion(Resource):
-    def get(self, driver_id):
+    def get(self, driver_id, data):
         """get spalaanie kierowcy"""
         try:
-            raise NotImplementedError
+            return driverCombutionGet(driver_id, data)
         except Exception as e:
             return error(e)
 
@@ -364,5 +382,186 @@ class FailureRate(Resource):
         except Exception as e:
             return error(e)
 
+#event log 
+@ns_event_log.route('/get')
+class EventLog(Resource):
+    def get(self):
+        """Get all"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+        
+@ns_event_log.route('/get/<int:id>')
+class EventLog(Resource):
+    def get(self, id):
+        """Get one"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+        
+@ns_event_log.route('/add')
+class EventLog(Resource):
+    def post(self):
+        """Create new"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_event_log.route('/edit/<int:id>')
+class EventLog(Resource):
+    def put(self, id):
+        """Edit one"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_event_log.route('/delete/<int:id>')
+class EventLog(Resource):
+    def delete(self, id):
+        """Delete one"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+#tankowanie
+@ns_refuiling.route('/get')
+class Refueling(Resource):
+    def get(self):
+        """get all"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_refuiling.route('/get/<int:bus_id>')
+class Refueling(Resource):
+    def get(self, bus_id):
+        """get all"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+        
+# @ns_refuiling.route('/get/<datatime:data>')
+# class Refueling(Resource):
+#     def get(self, data):
+#         """get all fro mdate"""
+#         try:
+#             raise NotImplementedError
+#         except Exception as e:
+#             return error(e)
+        
+
+@ns_refuiling.route('/add')
+class Refueling(Resource):
+    def post(self):
+        """add new"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
+
+#ride
+@ns_ride.route('/get')
+class Ride(Resource):
+    def get(self):
+        """get all"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)      
+
+
+@ns_ride.route('/get/<int:id>')
+class Ride(Resource):
+    def get(self, id):
+        """get one"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
+
+@ns_ride.route('/add')
+class Ride(Resource):
+    def post(self):
+        """add new"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
+
+@ns_ride.route('/edit/<int:id>')
+class Ride(Resource):
+    def put(self, id):
+        """edit one"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
+
+@ns_ride.route('/delete/<int:id>')
+class Ride(Resource):
+    def delete(self, id):
+        """delete one"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
+
+#ridelog
+@ns_ride_log.route('/get')
+class RideLog(Resource):
+    def get(self):
+        """get all"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_ride_log.route('/get/<int:id>')
+class RideLog(Resource):
+    def get(self, id):
+        """get one by id"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)  
+
+@ns_ride_log.route('/delete/<int:id>')
+class RideLog(Resource):
+    def delete(self, id):
+        """delete new"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
+
+@ns_ride_log.route('/add')
+class RideLog(Resource):
+    def post(self):
+        """add new"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
+        
+@ns_ride_log.route('/edit/<int:id>')
+class RideLog(Resource):
+    def put(self, id):
+        """edit new"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e) 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+#################################
+### tu zaczac nastepnym razem ###
+#################################

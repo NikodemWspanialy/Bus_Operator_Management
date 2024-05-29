@@ -1,5 +1,5 @@
 from database import create_connection
-from Queries.Extends.responseExtend import concatNameValue, serializeDataTime
+from Queries.Extends.responseExtend import concatNameValue, serializeDate
 
 #CRUD caly
 
@@ -16,8 +16,8 @@ def holidaysGetAll():
   cursor.close()
   connection.close()
   response = concatNameValue(columns, holidays)
-  response = serializeDataTime(response, 'start_date')
-  response = serializeDataTime(response, 'end_date')
+  response = serializeDate(response, 'start_date')
+  response = serializeDate(response, 'end_date')
   return {"holidays": holidays}
 
 def holidaysGetByDriverId(id):
@@ -32,8 +32,8 @@ def holidaysGetByDriverId(id):
   cursor.close()
   connection.close()
   response = concatNameValue(columns, holidays)
-  response = serializeDataTime(response, 'start_date')
-  response = serializeDataTime(response, 'end_date')
+  response = serializeDate(response, 'start_date')
+  response = serializeDate(response, 'end_date')
   return {"holidays": holidays}
 
 def holidaysCreate(data):
