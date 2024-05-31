@@ -25,7 +25,8 @@ ns_ride_log = api.namespace('ride_log', description='cala historia przejazdow z 
 ns_profitability = api.namespace('profitability', description='raporty - rentownosc')
 ns_line = api.namespace('line', description='line CRUD')
 ns_track = api.namespace('track', description='linia - godzina odjazdu z przystanku 0 i useless bus type ale musial byc ')
-ns_real_time = api.namespace('realTime', description='godzina o ktorej bus rzeczywiscie dojechal na przytanek do liczenia spoznien, przyspieszen itd')
+ns_real_time = api.namespace('real_time', description='godzina o ktorej bus rzeczywiscie dojechal na przytanek do liczenia spoznien, przyspieszen itd')
+ns_bus_stop = api.namespace('bus_stop', description='przystanki CRUD')
 
 driver_model = api.model('DriverModel', {
     'name': fields.String(required=True, description='Driver first name'),
@@ -93,6 +94,9 @@ track_model = api.model('trackModel',{
 })
 real_time_model = api.model('realTimeModel',{
 
+})
+bus_stop_model = api.model('busStopModel',{
+    
 })
 
 #DRIVER API
@@ -774,6 +778,54 @@ class RealTime(Resource):
             raise NotImplementedError
         except Exception as e:
             return error(e)
+
+@ns_bus_stop.route('/get')
+class Track(Resource):
+    def get(self):
+        """get all bus_stop"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_bus_stop.route('/get/<int:id>')
+class Track(Resource):
+    def get(self, id):
+        """get bus_stop by id"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_bus_stop.route('/delete/<int:id>')
+class Track(Resource):
+    def delete(self, id):
+        """delete by id"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_bus_stop.route('/add')
+class Track(Resource):
+    @ns_bus_stop.expect(bus_stop_model)
+    def post(self):
+        """add new bus_stop"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+
+@ns_bus_stop.route('/edit/<int:id>')
+class Track(Resource):
+    @ns_bus_stop.expect(bus_stop_model)
+    def put(self,id):
+        """edit bus_stop witch id"""
+        try:
+            raise NotImplementedError
+        except Exception as e:
+            return error(e)
+ 
 
 if __name__ == '__main__':
     app.run(debug=True)
