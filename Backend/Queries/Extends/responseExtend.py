@@ -13,5 +13,6 @@ def serializeDataTime(collection, name):
 
 def serializeDate(collection, name):
     for obj in collection:
-        obj[name] = obj[name].strftime('%Y-%m-%d')
+        if obj[name] is not None:
+          obj[name] = obj[name].strftime('%Y-%m-%d')
     return collection

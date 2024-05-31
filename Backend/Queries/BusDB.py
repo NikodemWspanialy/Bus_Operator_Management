@@ -1,18 +1,19 @@
 from database import create_connection
-from Queries.Extends.responseExtend import concatNameValue
+from Queries.Extends.responseExtend import concatNameValue, serializeDate
 
 def busGetAll():
   connection = create_connection()
   if connection is None:
     return {"error": "Nie udało się połączyć z bazą danych"}, 500
   cursor = connection.cursor()
-  query = 'SELECT b.id, bt.description, bt.shortcut, capacity FROM bus b inner join bus_type bt on bt.id = b.bus_type_id '
+  query = 'SELECT b.id, next_car_review, actual_event_log_id, description as bus_type_description, shortcut, capacity FROM bus b inner join bus_type bt on bt.id = b.bus_type_id'
   cursor.execute(query)
   buses = cursor.fetchall()
   columns = [desc[0] for desc in cursor.description]
   cursor.close()
   connection.close()
   response = concatNameValue(columns, buses)
+  response = serializeDate(response, 'next_car_review')
   return {"buses": response}
 
 def busGetById(id):
@@ -20,11 +21,12 @@ def busGetById(id):
   if connection is None:
     return {"error": "Nie udało się połączyć z bazą danych"}, 500
   cursor = connection.cursor()
-  query = 'SELECT b.id, bt.description, bt.shortcut, capacity FROM bus b inner join bus_type bt on bt.id = b.bus_type_id where b.id =  %s'
+  query = 'SELECT b.id, next_car_review, actual_event_log_id, description as bus_type_description, shortcut, capacity FROM bus b inner join bus_type bt on bt.id = b.bus_type_id where b.id =  %s'
   cursor.execute(query, (id,))
   bus = cursor.fetchall()
   columns = [desc[0] for desc in cursor.description]
   response = concatNameValue(columns, bus)
+  response = serializeDate(response, 'next_car_review')
   return{"bus": response}
 
 def busDelete(id):

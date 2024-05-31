@@ -21,6 +21,6 @@ def create_connection():
     
 def error(e):
     print("Wystąpił błąd podczas pobierania danych:", e)
-    return {"error": "Wystąpił błąd podczas pobierania danych"}, 500
+    return {"error": e}, 500
 
 

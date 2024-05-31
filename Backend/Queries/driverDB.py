@@ -92,8 +92,6 @@ def driverUpdate(data, id):
     WHERE id = %s
     """, (name, lastname, license, salary, holidays_days, id))
   connection.commit()
-  query = 'Select id from driver where name = %s and lastname = %s'
-  driver_id = cursor.execute(query, (name, lastname))
   cursor.close()
   connection.close()
-  return {"updated_driver_id": driver_id}, 200
+  return {"updated_driver_id": id}, 200
