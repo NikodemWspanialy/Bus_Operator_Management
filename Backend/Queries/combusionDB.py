@@ -21,4 +21,4 @@ def combutionGet(id, data):
   connection.close()
   response = concatNameValue(columns, data)
   response = serializeDate(response, 'date')
-  return {"combusion:": response}
+  return {"combusion": response}

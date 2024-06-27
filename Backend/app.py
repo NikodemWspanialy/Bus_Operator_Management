@@ -1,15 +1,11 @@
-from flask import Flask, jsonify, request, Blueprint
-from flask_cors import CORS
+from flask import Flask, jsonify, request
 from flask_restx import Api, Resource, fields
+from flask_cors import CORS
 from database import error
 from QueriesDBImports import *
 
-#flusk API startfile
 app = Flask(__name__)
-#enable all origins grom all paths
 CORS(app, resources={r"/*": {"origins": "*"}})
-
-#swagger
 api = Api(app, version='2.0', title='Bus Management API',
           description='SWAGGER ze wszystkimi endpointami restAPI', doc='/swagger/')
 #zrobione

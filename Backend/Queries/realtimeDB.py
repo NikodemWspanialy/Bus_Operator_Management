@@ -40,7 +40,7 @@ where tr.id = %s"""
   response = serializeDataTime(response, 'scheduled_time')
   response = serializeDataTime(response, 'real_time')
   response = serializeDate(response, 'date')
-  return {"realtime": response}
+  return {"realtimes": response}
 
 def realtimeGetByRideId(id):
   connection = create_connection()

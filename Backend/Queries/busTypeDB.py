@@ -13,7 +13,7 @@ def busTypeGetAll():
   cursor.close()
   connection.close()
   response = concatNameValue(columns, data)
-  return {"busTypes:": response}
+  return {"busTypes": response}
 
 def busTypeGetById(id):
   connection = create_connection()
